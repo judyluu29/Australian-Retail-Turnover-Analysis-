@@ -7,7 +7,20 @@ An exploratory analysis of Australian retail turnover examining how retail activ
 The project moves beyond reporting total turnover to investigate the underlying structure of Australian retail activity, including the impact of COVID-19, geographic concentration, long-term competition between NSW and Victoria, and industry-specific seasonality.
 
 ---
-# Skills Demonstrated
+## Project Overview
+
+Australian retail turnover can appear straightforward when viewed only as a national total. However, aggregate figures can hide substantial differences between:
+
+- states and territories,
+- retail industries,
+- periods of economic disruption,
+- long-term geographic trends, and
+- seasonal demand patterns.
+
+This project uses Australian monthly retail turnover data from **1982 to 2025** to explore these differences and translate statistical graphics into meaningful business insights.
+
+---
+## Skills Demonstrated
 
 **R | tidyverse | dplyr | ggplot2 | Data Visualisation | Exploratory Data Analysis**
 
@@ -28,18 +41,6 @@ This project demonstrates:
 - Communicating analytical findings through a structured visual story
 
 ---
-
-## Project Overview
-
-Australian retail turnover can appear straightforward when viewed only as a national total. However, aggregate figures can hide substantial differences between:
-
-- states and territories,
-- retail industries,
-- periods of economic disruption,
-- long-term geographic trends, and
-- seasonal demand patterns.
-
-This project uses Australian monthly retail turnover data from **1982 to 2025** to explore these differences and translate statistical graphics into meaningful business insights.
 
 ### Key Analytical Questions
 
