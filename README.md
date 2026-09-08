@@ -342,7 +342,7 @@ This observation becomes important later when seasonality is analysed directly.
 
 # Key Analytical Insights
 
-# 3. COVID-19 Reshaped Industries Differently
+# COVID-19 Reshaped Industries Differently
 
 ![Change in Australian Annual Retail Turnover by Industry Group Before, During and After COVID-19](images/covid_industry_change.png)
 
