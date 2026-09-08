@@ -160,7 +160,6 @@ Business Interpretation
 The analysis progresses from understanding the dataset to investigating increasingly specific business questions.
 
 ---
----
 
 # Methodology
 
