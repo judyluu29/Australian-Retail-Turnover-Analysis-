@@ -7,6 +7,27 @@ An exploratory analysis of Australian retail turnover examining how retail activ
 The project moves beyond reporting total turnover to investigate the underlying structure of Australian retail activity, including the impact of COVID-19, geographic concentration, long-term competition between NSW and Victoria, and industry-specific seasonality.
 
 ---
+# Skills Demonstrated
+
+**R | tidyverse | dplyr | ggplot2 | Data Visualisation | Exploratory Data Analysis**
+
+This project demonstrates:
+
+- Data cleaning and validation
+- Missing-data assessment
+- Exploratory data analysis
+- Data aggregation
+- Comparative analysis
+- Time-series analysis
+- Indexed data transformation
+- Distribution analysis
+- Ranking and contribution analysis
+- Seasonal pattern identification
+- Statistical visualisation
+- Business-focused interpretation
+- Communicating analytical findings through a structured visual story
+
+---
 
 ## Project Overview
 
@@ -138,14 +159,112 @@ Business Interpretation
 The analysis progresses from understanding the dataset to investigating increasingly specific business questions.
 
 ---
+---
+
+# Methodology
+
+## 1. Data Quality Assessment
+
+The dataset was examined for:
+
+- data types,
+- missing observations,
+- date coverage,
+- state coverage,
+- industry coverage,
+- incomplete years, and
+- turnover distribution.
+
+Missing turnover observations were retained rather than artificially replaced.
+
+---
+
+## 2. State Turnover
+
+Annual turnover by state was calculated as:
+
+```r
+group_by(year, state) %>%
+summarise(
+  annual_turnover = sum(value, na.rm = TRUE)
+)
+```
+
+---
+
+## 3. Industry Distribution
+
+Monthly observations were compared using:
+
+- violin distributions,
+- boxplots,
+- individual monthly observations, and
+- industry turnover tiers.
+
+This allowed both typical turnover and within-year variability to be examined.
+
+---
+
+## 4. COVID-19 Industry Index
+
+Each industry's annual turnover was normalised relative to 2019:
+
+```text
+Index = Annual Turnover / 2019 Turnover × 100
+```
+
+This controlled for differences in absolute industry size.
+
+---
+
+## 5. State Industry Share
+
+Each state's contribution within an industry was calculated as:
+
+```text
+State Industry Share =
+State Industry Turnover
+÷ Total Industry Turnover
+× 100
+```
+
+Each industry therefore sums to 100% across the eight states and territories.
+
+---
+
+## 6. NSW–Victoria Relative Gap
+
+The difference between Australia's two largest retail markets was calculated as:
+
+```text
+NSW Relative Lead =
+(NSW Turnover - Victoria Turnover)
+÷ Victoria Turnover
+× 100
+```
+
+---
+
+## 7. Seasonal Index
+
+Monthly turnover was standardised against each industry's average month within the same year:
+
+```text
+Monthly Index =
+Monthly Turnover
+÷ Industry-Year Monthly Average
+× 100
+```
+
+Indices were then averaged across **2015–2024** to identify recurring seasonal patterns.
+
+---
 
 # Retail Landscape
 
 ## 1. Annual Turnover by State and Territory — 2024
 
 ![Annual Turnover by State and Territory, 2024](images/state_turnover_2024.png)
-
-### Analytical Question
 
 **Where is Australian retail activity concentrated?**
 
@@ -173,8 +292,6 @@ This leads to a deeper question:
 ## 2. NSW Turnover Distribution by Industry — 2007
 
 ![NSW Turnover Distribution by Industry Group in 2007](images/nsw_industry_distribution_2007.png)
-
-### Analytical Question
 
 **How differently do NSW retail industries behave within the same state and year?**
 
@@ -228,8 +345,6 @@ This observation becomes important later when seasonality is analysed directly.
 # 3. COVID-19 Reshaped Industries Differently
 
 ![Change in Australian Annual Retail Turnover by Industry Group Before, During and After COVID-19](images/covid_industry_change.png)
-
-### Analytical Question
 
 **How did different industries change before, during and after COVID-19?**
 
@@ -397,8 +512,6 @@ The pandemic-related increase therefore did not continue at the same pace.
 
 ![State and Territory Shares of Turnover by Industry](images/state_industry_share.png)
 
-### Analytical Question
-
 **Does NSW's overall retail leadership mean it leads every individual industry?**
 
 Each state's 2024 turnover was calculated as a percentage of national turnover within each industry.
@@ -545,8 +658,6 @@ This was the **smallest relative gap observed across the 35-year comparison**.
 # 6. Seasonal Variation Differs Substantially by Industry
 
 ![Seasonal Variation in Retail Turnover by Industry](images/seasonal_variation.png)
-
-### Analytical Question
 
 **Which industries experience the strongest seasonal variation?**
 
@@ -758,188 +869,6 @@ Newspaper and book retailing provides an important example: its downward trend e
 
 Indexed measures allow businesses to compare categories of very different scales without allowing the largest industries to dominate the analysis.
 
----
-
-# Methodology
-
-## 1. Data Quality Assessment
-
-The dataset was examined for:
-
-- data types,
-- missing observations,
-- date coverage,
-- state coverage,
-- industry coverage,
-- incomplete years, and
-- turnover distribution.
-
-Missing turnover observations were retained rather than artificially replaced.
-
----
-
-## 2. State Turnover
-
-Annual turnover by state was calculated as:
-
-```r
-group_by(year, state) %>%
-summarise(
-  annual_turnover = sum(value, na.rm = TRUE)
-)
-```
-
----
-
-## 3. Industry Distribution
-
-Monthly observations were compared using:
-
-- violin distributions,
-- boxplots,
-- individual monthly observations, and
-- industry turnover tiers.
-
-This allowed both typical turnover and within-year variability to be examined.
-
----
-
-## 4. COVID-19 Industry Index
-
-Each industry's annual turnover was normalised relative to 2019:
-
-```text
-Index = Annual Turnover / 2019 Turnover × 100
-```
-
-This controlled for differences in absolute industry size.
-
----
-
-## 5. State Industry Share
-
-Each state's contribution within an industry was calculated as:
-
-```text
-State Industry Share =
-State Industry Turnover
-÷ Total Industry Turnover
-× 100
-```
-
-Each industry therefore sums to 100% across the eight states and territories.
-
----
-
-## 6. NSW–Victoria Relative Gap
-
-The difference between Australia's two largest retail markets was calculated as:
-
-```text
-NSW Relative Lead =
-(NSW Turnover - Victoria Turnover)
-÷ Victoria Turnover
-× 100
-```
-
----
-
-## 7. Seasonal Index
-
-Monthly turnover was standardised against each industry's average month within the same year:
-
-```text
-Monthly Index =
-Monthly Turnover
-÷ Industry-Year Monthly Average
-× 100
-```
-
-Indices were then averaged across **2015–2024** to identify recurring seasonal patterns.
-
----
-
-# Data Limitations
-
-This project should be interpreted with several limitations in mind.
-
-- The dataset contains **3,878 missing turnover values**.
-- 1982 contains only April–December.
-- 2025 contains only January–June.
-- Therefore, 2025 should not be directly compared with complete annual totals.
-- Turnover is measured in nominal dollar values and is **not adjusted for inflation**.
-- Larger states naturally have larger populations, so total turnover does not represent per-capita spending.
-- The COVID-19 analysis is descriptive and does not establish causation.
-- Seasonal patterns identify recurring associations but do not explain the underlying causes.
-- External economic variables such as population, inflation, employment and interest rates were not included.
-
----
-
-# Future Development
-
-Potential extensions include:
-
-- Adjust turnover for **inflation**
-- Calculate **per-capita state turnover**
-- Apply formal **time-series decomposition**
-- Analyse trend and seasonal components separately
-- Forecast future retail turnover
-- Compare pre- and post-COVID growth rates statistically
-- Integrate unemployment, CPI or interest-rate data
-- Analyse retail turnover relative to population growth
-- Investigate whether Victoria's convergence with NSW is continuing
-- Build an interactive **Power BI or Tableau dashboard**
-
----
-
-# Repository Structure
-
-```text
-australian-retail-turnover-analysis/
-│
-├── README.md
-│
-├── data/
-│   └── turnover.csv
-│
-├── analysis/
-│   └── retail_turnover_analysis.Rmd
-│
-├── report/
-│   └── retail_turnover_analysis.pdf
-│
-└── images/
-    ├── state_turnover_2024.png
-    ├── nsw_industry_distribution_2007.png
-    ├── covid_industry_change.png
-    ├── state_industry_share.png
-    ├── nsw_vic_gap.png
-    └── seasonal_variation.png
-```
-
----
-
-# Skills Demonstrated
-
-**R | tidyverse | dplyr | ggplot2 | Data Visualisation | Exploratory Data Analysis**
-
-This project demonstrates:
-
-- Data cleaning and validation
-- Missing-data assessment
-- Exploratory data analysis
-- Data aggregation
-- Comparative analysis
-- Time-series analysis
-- Indexed data transformation
-- Distribution analysis
-- Ranking and contribution analysis
-- Seasonal pattern identification
-- Statistical visualisation
-- Business-focused interpretation
-- Communicating analytical findings through a structured visual story
-
----
 
 # Conclusion
 
@@ -957,11 +886,3 @@ The strongest insight from the project is therefore not simply which state or in
 
 It is that **retail performance should be analysed simultaneously across geography, industry, time and seasonality to understand what is actually driving the market.**
 
----
-
-## Full Analysis
-
-The complete R analysis, code, exploratory outputs and detailed interpretations are available in:
-
-- `analysis/retail_turnover_analysis.Rmd`
-- `report/retail_turnover_analysis.pdf`
