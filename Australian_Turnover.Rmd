@@ -1,0 +1,1066 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                  message = FALSE, 
+                  warning = FALSE)
+
+library(knitr)
+library(tidyverse)
+```
+
+
+    ```{r, echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+#Load data
+turnover <- read_csv("turnover.csv")
+glimpse(turnover)
+
+#Check for missing data
+turnover %>%
+summarise(
+  missing_date = sum(is.na(date)),
+  missing_value = sum(is.na(value)),
+  missing_state = sum(is.na(state)),
+  missing_industry = sum(is.na(industry_group)),
+  missing_year = sum(is.na(year)),
+  missing_month = sum(is.na(month))
+)
+
+    ```
+    
+- The dataset has 46,710 rows and six variables. **`date`** is stored as a date variable; **`value`**, **`year`** and **`month`** are numerical variables; **`state`** and **`industry_group`** are character variables. Only **`value`** has 3,878 missing values. The missing turnover values were kept instead of replaced or deleted because changing them could lead to bias or false information. Below is the description of each variable:
+
+
+    ```{r, echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+# 6 variables
+
+#1. Variable 1: Date
+    #a. Date summary
+
+  #group data by date
+by_date <- turnover %>%
+group_by(date) %>%
+summarise(number_of_observations = n())
+
+head(by_date)
+
+  #summarise date range
+by_date %>%
+summarise(
+  first_date = min(date),
+  last_date = max(date),
+  number_of_months = n(),
+  minimum_observations_per_month = min(number_of_observations),
+  maximum_observations_per_month = max(number_of_observations)
+)
+
+    #b. Data availability over time
+reported_by_date <- turnover %>%
+group_by(date) %>%
+summarise(reported_values = sum(!is.na(value)),
+          .groups = "drop")
+
+
+  #plotting
+ggplot(reported_by_date,aes(x = date, y = reported_values)) +
+  geom_line( colour = "#08306B",linewidth = 0.7) +
+  labs(
+    title = "Number of Actual Turnover Values Reported",
+    x = "Date",
+    y = "Number of Reported Values") +
+  scale_x_date( date_labels = "%Y", date_breaks = "5 years" ) +
+  scale_y_continuous(breaks = seq(76, 90, by = 2)) +
+  coord_cartesian(ylim = c(75, 90)) +
+  theme_bw() +
+  theme(
+    text = element_text(size = 12),
+    plot.title = element_text(face = "bold", hjust = 0.5))
+
+    ```
+    
+- **`date`:** Illustrates when turnover data were recorded. All dates use the first day of the month as a standard monthly reference date. For example, 1982-04-01 represents the month of April 1982. The dataset has a total of 519 months, from April 1982 to June 2025. Each date has 90 rows, representing nine states (including total states) combined with ten industry series (including total industries). Data availability generally improves over time, although temporary decreases occur around 2010, 2013, 2019 and 2020. "Number of Reported Turnover Values Each Month" graph measures data completeness and should not be interpreted as showing changes in the amount of turnover.
+
+    ```{r, echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+
+# Variable 2: State
+
+  #count the observations and arrange states alphabetically
+by_state <- turnover %>%
+group_by(state) %>%
+summarise(number_of_observations = n(),
+    .groups = "drop") %>%
+arrange(state)
+
+by_state
+
+    ```
+    
+- **`state`:** Illustrates where each turnover observation belongs to. It includes eight Australian states and territories plus Total (State), giving nine categories. Although there are 5,190 rows for each state, it doesn't mean that they have equal turnover or equal number of reported turnover values because n() also counts rows where value is missing.
+
+    ```{r, echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+#Variable 3: Industry
+
+
+  #count the observations and arrange industry alphabetically
+by_industry <- turnover %>%
+group_by(industry_group) %>%
+summarise(number_of_observations = n(),
+    .groups = "drop") %>%
+arrange(industry_group)
+
+by_industry
+
+    ```
+
+- **`industry_group`:** Illustrates the industry associated with each observation, including nine industries plus Total (Industry). Each category has 4,671 rows.
+
+    ```{r, echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+
+#Variable 4: Year 
+
+  #number of rows each year
+by_year <- turnover %>%
+group_by(year) %>%
+summarise(number_of_observations = n(),
+          .groups = "drop")
+  
+  #summarise year range
+year_summary <- by_year %>%
+summarise(
+  first_year = min(year),
+  last_year = max(year),
+  number_of_years = n(),
+  minimum_observations = min(number_of_observations),
+  maximum_observations = max(number_of_observations))
+
+year_summary
+
+# Rank years from the smallest to largest number of observations
+by_year_ranked <- by_year %>%
+  arrange(number_of_observations,year)
+
+print(by_year_ranked, n = 44)
+
+  #check the two partial years at the beginning and end of the dataset
+turnover %>%
+filter(year %in% c(1982, 2025)) %>%
+group_by(year) %>%
+summarise(
+  first_date = min(date),
+  last_date = max(date),
+  number_of_months = n_distinct(month),
+  number_of_observations = n())
+
+    ```
+- **`year`:** Illustrates only the year of each observation. It has 44 years, from 1982 to 2025. Most years were fully recorded with 12 months, returning 1,080 rows but the year of 1982 has 810 rows because the data begin in April, while 2025 has 540 rows because the data end in June. Therefore, the lower counts in these years reflect incomplete records, not lower turnover.
+    ```{r, echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+
+#Variable 5: Month
+
+  #count and arrange rows each month
+by_month <- turnover %>%
+group_by(month) %>%
+summarise(number_of_observations = n(),
+          .groups = "drop") %>%
+arrange(month)
+
+print(by_month)
+
+
+    ```
+- **`month`:** Illustrates 12 months in a year. Notably, this variable group the same month together, regardless of years. April, May and June each have 3,960 rows, while every other month has 3,870 rows. This difference does not demonstrate seasonal patterns because the dataset begins in April 1982 and ends in June 2025 .
+    ```{r, echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+
+#Variable 6: Value 
+
+ #Summarise the reported turnover values while keeping missing rows in the data
+value_summary <- turnover %>%
+summarise(
+  total_observations = n(),
+  reported_values = sum(!is.na(value)),
+  missing_values = sum(is.na(value)),
+  minimum = min(value, na.rm = TRUE),
+  median = median(value, na.rm = TRUE),
+  average = mean(value, na.rm = TRUE),
+  maximum = max(value, na.rm = TRUE),
+  standard_deviation = sd(value, na.rm = TRUE))
+
+value_summary
+
+  #plotting - dollar scale
+ggplot(turnover, aes(x = value)) +
+  geom_histogram(
+    bins = 30,
+    fill = "#08306B",
+    colour = "white",
+    na.rm = TRUE) +
+  labs(
+    title = "Distribution of Turnover Values",
+    subtitle = "Original scale",
+    x = "Retail Turnover Value",
+    y = "Count") +
+  theme_bw()+
+  theme(plot.title = element_text(face = "bold", hjust=0.5), 
+        plot.subtitle = element_text(hjust = 0.5))
+
+#plotting - log scale
+ggplot(turnover, aes(x = value)) +
+  geom_histogram(
+    bins = 30,
+    fill = "#08306B",
+    colour = "white",
+    na.rm = TRUE) +
+  scale_x_log10(
+    breaks = c(1, 10, 100, 1000, 10000),
+    labels = scales::label_comma()) +
+  labs(
+    title = "Distribution of Turnover Values",
+    subtitle = "Logarithmic scale",
+    x = "Turnover Value (log scale)",
+    y = "Count") +
+  theme_bw() +
+  theme(
+    text = element_text(size = 12),
+    plot.title = element_text(face = "bold", hjust = 0.5))
+
+
+    ```
+- **`value`:** Illustrates monthly turnover, measured in millions dollars according to the ABS description. It has 46,710 observations, in which 42,832 have reported turnover values and 3,878 are missing. The reported values range from $0.6 million to $45,943 million, with a median of $176.7 million and an average of around $894 million. The average is much higher than the median, highlighting that the distribution is strongly right-skewed. The reason behind this may be that there is a small number of observations, such as totals and turnover from larger economic states or industries, have much higher values. Growth in spending over time may also result in these high values. Therefore, a logarithmic scale is also used to show the lower and middle values more clearly without removing or changing any reported values.
+
+
+    ```{r, echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+
+  #filter data
+state_turnover_2024 <- turnover %>%
+filter(
+  year == 2024,
+  industry_group == "Total (Industry)",
+  state != "Total (State)") %>%
+
+  #Calculate annual turnover for each and its percentage
+group_by(state) %>%
+summarise( annual_turnover = sum(value),
+           .groups = "drop") %>%
+mutate(percentage = 100 * annual_turnover / sum(annual_turnover))
+
+    #rank from highest
+state_turnover_2024 <- state_turnover_2024 %>%
+arrange(desc(annual_turnover))
+
+state_turnover_2024
+
+
+  #prepare slice positions and labels
+donut_summary <- state_turnover_2024 %>%
+arrange(desc(state)) %>%
+mutate(
+  label_position = cumsum(percentage) - 0.5 * percentage,
+  percentage_label = paste0(round(percentage, 1),"%")
+)
+
+  #plotting
+ggplot(donut_summary,
+       aes(x = 2, y = percentage, fill = state)
+) +
+geom_bar(stat = "identity", colour = "white"
+) +
+geom_text(
+  data = donut_summary %>%
+  filter(percentage >= 7),
+  aes(x = 2,
+      y = label_position,
+      label = percentage_label),
+  inherit.aes = FALSE,
+  colour = "white",
+  fontface = "bold",
+  size = 3
+) +
+geom_segment(
+  data = donut_summary %>%
+  filter(percentage < 7),
+  aes(
+    x = 2.5,
+    xend = 2.8,
+    y = label_position,
+    yend = label_position),
+  colour = "darkgrey",
+  linewidth = 0.5
+) +
+geom_text(
+  data = donut_summary %>%
+  filter(percentage < 7),
+  aes(
+    x = 3,
+    y = label_position,
+    label = percentage_label),
+  inherit.aes = FALSE,
+  colour = "black",
+  fontface = "bold",
+  size = 3.5
+) +
+coord_polar(
+  theta = "y",
+  start = 0,
+  clip = "off"
+) +
+scale_fill_manual(
+  values = c(
+    "New South Wales" = "#08306B",
+    "Victoria" = "#B8B8B8",
+    "Queensland" = "#F5B6CD",
+    "Western Australia" = "#DFC5EB",
+    "South Australia" = "#B9DEC7",
+    "Tasmania" = "#F5D9AE",
+    "Australian Capital Territory" = "#E98B8B",
+    "Northern Territory" = "#A9CFE8")
+) +
+scale_x_continuous(limits = c(0.5, 2.5),oob = scales::oob_keep
+) +
+labs(
+    title = "Annual Turnover by State and Territory, 2024",
+) +
+theme_void() +
+theme(
+  text = element_text(size = 12),
+  plot.title = element_text(face = "bold",margin = margin(b = 15)),
+  legend.title = element_text(size = 12),
+  legend.text = element_text(size = 10),
+  plot.margin = margin(10, 30, 10, 30)
+)
+
+    ```
+
+New South Wales had the highest turnover, at roughly $135,639 million, equivalent to 31.1% of the national total. Victoria followed with around $112,611 million or 25.8%, meaning these two states alone accounted for 56.8% of all turnover in 2024, a gap of roughly $23,028 million between them despite only a 5.3 percentage point difference in share. Queensland held the third-largest share, with turnover of about $89,987 million, representing 20.6% of the total, bringing the combined share of the three largest states to 77.4% and leaving the remaining five states and territories to account for just 22.6% between them.
+
+Western Australia and South Australia contributed considerably smaller amounts, at around $49,491 million (11.3%) and $28,136 million (6.4%) respectively. Together with the top three states, these five regions accounted for over 95% of national turnover, leaving only a small remainder for the three smallest states and territories.
+
+Tasmania, the Australian Capital Territory, and the Northern Territory recorded the lowest turnover figures, at about $8,717 million, $8,150 million and $4,026 million respectively, equating to 2.0%, 1.9%, and 0.9% of the national total. Combined, these three regions contributed less than 5% of national turnover. The gap between the largest and smallest state is particularly pronounced, with New South Wales' turnover roughly 34 times that of the Northern Territory, a scale of difference that highlights how heavily concentrated Australian retail activity is in its most populous eastern states.
+
+```{r, echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+
+  # Calculate annual total turnover for each state
+annual_state_turnover <- turnover %>%
+filter(industry_group == "Total (Industry)", state != "Total (State)") %>%
+      
+group_by(year, state) %>%
+summarise( annual_turnover = sum( value, na.rm = TRUE),
+           .groups = "drop")
+
+    #plotting
+ggplot( annual_state_turnover,
+        aes(x = year,
+            y = annual_turnover,
+            colour = state,
+            group = state)
+) +
+geom_line(linewidth = 0.5) +
+scale_colour_manual(values = c("New South Wales" = "#08306B",
+                               "Victoria" = "#B8B8B8",                     
+                               "Queensland" = "#F5B6CD",
+                               "Western Australia" = "#DFC5EB",  
+                               "South Australia" = "#B9DEC7",    
+                               "Tasmania" = "#F5D9AE",     
+                               "Australian Capital Territory" = "#E98B8B", 
+                               "Northern Territory" = "#A9CFE8")
+) +
+scale_x_continuous(breaks = seq(1985, 2025, by = 5) ) +
+scale_y_continuous(breaks = seq(0,140000,by = 20000),
+                   labels = scales::label_comma(),
+                   limits = c(0, 140000)
+) +
+labs(title = "Annual Turnover by State and Territory",
+     x = "Year",
+     y = "Annual Turnover ($ million)",
+     colour = NULL,
+) +
+theme_bw(base_size = 11) +
+theme(plot.title = element_text(face = "bold",size = 15,hjust = 0.5),
+      panel.grid.minor = element_blank(),
+      legend.position = "bottom",
+      legend.text = element_text(size = 9)
+) +
+guides(colour = guide_legend( nrow = 2, byrow = TRUE))
+
+```
+
+The line graph illustrates that New South Wales recorded the highest annual turnover of all states and territories in every year from the early 1980s through to 2025. Its line remains above Victoria's, the second-highest state, throughout the entire series, confirming that NSW's lead was continuous rather than something it gained or lost at different points in time.
+
+New South Wales' turnover rose from around $12,000 million in the early 1980s to a peak of approximately $136,000 million in 2024. Victoria followed a broadly similar upward path, growing from about $8,000 million to a peak of around $113,000 million, while Queensland rose from roughly $5,000 million to approximately $90,000 million over the same timeframe. These three states maintained a consistent order throughout, with the gap between them widening steadily as turnover increased, particularly from early 2000s onward.
+
+Western Australia and South Australia grew more moderately, reaching peaks of around $50,000 million and $29,000 million by 2024, up from under $5,000 million each at the start. Both states tracked closely together until the early 2000s, when Western Australia began pulling ahead, and the gap between them continued widening through to 2024.
+
+Tasmania, the Australian Capital Territory, and the Northern Territory recorded far lower turnover throughout, staying below $10,000 million even at their 2024 peaks. Tasmania and the Australian Capital Territory tracked each other closely for most of the period, with their lines running almost together, while the Northern Territory remained consistently the lowest of the three. Despite their small scale, all three still grew several times over from their starting levels in the early 1980s.
+
+Every state and territory shows a steep decline in the final data point around 2025, with New South Wales falling from roughly $136,000 million to about $66,000 million. Given this sudden and uniform drop, it likely reflects a partial or incomplete final year of data rather than an actual collapse in retail turnover.
+
+
+```{r, fig.width=12, fig.height=20, out.width="100%", echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+
+#NSW in 2007 were chosen
+  
+  #filter data
+nsw_industry <- turnover %>%
+filter(state == "New South Wales",
+       year == 2007,
+       industry_group != "Total (Industry)"
+) %>%
+      
+  #calculate the median turnover for each industry to divide them into high, mid and low turnover level
+
+group_by(industry_group) %>%
+mutate(industry_median = median(value)) %>%
+ungroup() %>%
+mutate(
+  turnover_level = case_when(
+  industry_median >= 1000 ~ "High turnover",
+  industry_median >= 300  ~ "Mid turnover",
+  TRUE                    ~ "Low turnover"),
+  turnover_level = factor( turnover_level, levels = c("High turnover","Mid turnover","Low turnover"))
+)
+
+  #plotting
+ggplot(nsw_industry,
+       aes(x = industry_group, y = value)
+) +
+geom_violin(
+  scale = "width",
+  adjust = 2,
+  fill = "white",
+  colour = "black",
+  linewidth = 0.5
+) +
+geom_boxplot(
+  width = 0.2,
+  fill = "orange",
+  colour = "black",
+  outlier.shape = NA,
+  alpha = 0.6,
+  linewidth = 0.5
+) +
+geom_point(
+  position = position_jitter(seed = 1, width = 0.05),
+  colour = "grey20",
+  size = 3,
+  alpha = 0.65
+) +
+facet_wrap(
+  ~turnover_level,
+  scales = "free",
+  ncol = 1
+) +
+scale_y_continuous(labels = scales::label_comma()
+) +
+scale_x_discrete(
+  labels = function(x) {stringr::str_wrap(x, width = 18)}
+) +
+labs(
+    title = "NSW Turnover Distribution by Industry Group in 2007",
+    x = "Industry Group",
+    y = "Monthly turnover ($ million)"
+) +
+theme_bw(base_size = 14) +
+theme(
+    plot.title = element_text(face = "bold",size = 18, hjust = 0.5),
+    strip.text = element_text(face = "bold", size = 13),
+    axis.text.x = element_text( size = 11, angle = 25, hjust = 1),
+    panel.spacing = unit(1.2, "lines")
+)
+    
+        
+```
+    
+====> SUGGEST SEASONAL PATTERN
+The industry's turnover values were divided into 3 tiers as below:
+- High turnover tier: Food retailing has the higher distribution, with a median turnover of about $2,200 million and most values concentrated around $2,150-$2,300 million. Its violin narrows into a long upper tail, showing that only a small number of months recorded substantially higher turnover. Supermarket and grocery stores has a lower median of around $1,700 million, with most values concentrated around $1,600–$1,800 million and a shorter upper tail. The boxes of these two industries do not overlap, indicating a clear difference in typical turnover between the two industries, rather than a difference caused only by one or two unusually high months.
+
+- Middle turnover tier: The industries separate clearly by monthly turnover, with no overlap between their boxes. Household goods retailing ranks first with a median of about $900 million and an upper tail reaching $1,300 million. Other retailing ranks second with a median of around $600 million and a longer relative upper tail reaching $1,100 million. Department stores ranks third at approximatley $450 million, but it shows the strongest relative variability as most months are concentrated around $400–$500 million, while its upper tail reaches approximately $900 million, more than twice its median. Clothing retailing ranks fourth with a median of $300 million and has the narrowest box, with the middle 50% of observations concentrated around $290–$330 million, making it the most consistent industry during most months despite one higher observation of approximately $490 million.
+
+- Low turnover tier: Takeaway food services ranks first with a median monthly turnover of approximately $280 million and has the most concentrated distribution in this tier. However, its box of approximately $275–$300 million overlaps slightly with clothing retailing’s box of $290–$330 million. This overlap shows that these two industries had partly similar turnover despite being placed in different tiers. Liquor retailing ranks second with a median of $190 million, but its long upper tail reaches up to $310 million, meaning that at least one high month reached takeaway’s range. Newspaper and book retailing remains clearly lowest, with a median of $85 million and a maximum of $125 million, below liquor retailing’s minimum of $175 million.
+
+
+```{r, echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+
+# What happened to industry groups before, during and after the COVID-19 pandemic?
+    
+  #calculate annual national turnover for each industry from 2017 to 2024
+covid_annual <- turnover %>%
+filter(
+  state == "Total (State)",
+  industry_group != "Total (Industry)",
+  year >= 2017,
+  year <= 2024
+) %>%
+group_by(industry_group, year) %>%
+summarise(
+  reported_months = sum(!is.na(value)),
+  annual_turnover = sum(value, na.rm = TRUE),
+  .groups = "drop")
+
+  #Rank actual turnover within each year
+covid_annual %>%
+arrange(year, desc(annual_turnover)) %>%
+print(n = 72)
+
+  #use each industry's 2019 turnover as the baseline
+baseline_2019 <- covid_annual %>%
+filter(year == 2019) %>%
+select(industry_group, turnover_2019 = annual_turnover)
+baseline_2019 %>%
+arrange(desc(turnover_2019))
+
+# Convert annual turnover into an index where 2019 equals 100
+covid_annual <- covid_annual %>%
+left_join(baseline_2019, by = "industry_group") %>%
+mutate(
+  turnover_index = annual_turnover / turnover_2019 * 100,
+  period = case_when(
+    year <= 2019 ~ "Before COVID-19",
+    year <= 2021 ~ "During COVID-19",
+    TRUE         ~ "After COVID-19"),
+  period = factor(
+    period,
+    levels = c("Before COVID-19","During COVID-19", "After COVID-19"))
+)
+  #check annual turnover, index and period for every industry
+covid_annual %>%
+  select(
+    industry_group,
+    year,
+    annual_turnover,
+    turnover_2019,
+    turnover_index,
+    period
+  ) %>%
+  arrange(industry_group, year) %>%
+  print(n = 72)
+
+  #Define the beginning and end of each period for graph shading
+covid_periods <- tibble( 
+  period = factor(
+    c("Before COVID-19","During COVID-19","After COVID-19"),
+    levels = c("Before COVID-19","During COVID-19","After COVID-19")),
+  xmin = c(2016.5, 2019.5, 2021.5),
+  xmax = c(2019.5, 2021.5, 2024.5)
+)
+
+covid_periods
+
+# Does New South Wales's overall leadership mean that it leads every individual industry?
+
+  # Calculate and rank total state turnover in 2024
+overall_state_2024 <- turnover %>%
+filter(
+  year == 2024,
+  industry_group == "Total (Industry)",
+  state != "Total (State)"
+) %>%
+group_by(state) %>%
+summarise(
+  reported_months = sum(!is.na(value)),
+  annual_turnover = sum(value, na.rm = TRUE),
+  .groups = "drop"
+) %>%
+arrange(desc(annual_turnover))
+
+overall_state_2024
+
+  #Calculate each state's annual turnover within each industry
+state_industry_2024 <- turnover %>%
+filter(
+  year == 2024,
+  state != "Total (State)",
+  industry_group != "Total (Industry)"
+) %>%
+group_by(industry_group, state) %>%
+summarise(
+  reported_months = sum(!is.na(value)),
+  annual_turnover = sum(value, na.rm = TRUE),
+  .groups = "drop"
+) %>%
+group_by(industry_group) %>%
+mutate(
+  industry_total = sum(annual_turnover),
+  turnover_share = annual_turnover / industry_total * 100,
+  industry_rank = min_rank(desc(annual_turnover))
+) %>%
+ungroup()
+
+    # Calculate each state's share and rank within its industry
+state_industry_2024 <- state_industry_2024 %>%
+mutate(
+  state_short = recode(state,
+                       "New South Wales" = "NSW",
+                       "Victoria" = "VIC",
+                       "Queensland" = "QLD",
+                       "Western Australia" = "WA",
+                       "South Australia" = "SA",
+                       "Tasmania" = "TAS",
+                       "Australian Capital Territory" = "ACT",
+                       "Northern Territory" = "NT"),
+  state_short = factor(state_short, levels = c( "NSW", "VIC", "QLD", "WA","SA", "TAS", "ACT", "NT")),
+  industry_group = forcats::fct_reorder(industry_group,industry_total,.desc = TRUE),
+  percentage_label = paste0(round(turnover_share, 1),"%"),
+  label_colour = if_else(turnover_share >= 24,"white", "black"),
+  label_style = if_else(industry_rank == 1,"bold", "plain")
+)
+
+# check the three leading states in every industry
+state_industry_2024 %>%
+filter(industry_rank <= 3) %>%
+arrange(industry_group, industry_rank) %>%
+select(
+  industry_group,
+  state,
+  annual_turnover,
+  turnover_share,
+  industry_rank
+) %>%
+print(n = 27)
+
+# Is Victoria catching up with New South Wales in retail turnover?
+
+  #Calculate annual state turnover for full years of 1989–2024
+annual_state_turnover <- turnover %>%
+filter(
+  year >= 1989,
+  year <= 2024,
+  industry_group == "Total (Industry)",
+  state != "Total (State)"
+) %>%
+group_by(year, state) %>%
+summarise(
+  reported_months = sum(!is.na(value)),
+  annual_turnover = sum(value, na.rm = TRUE), 
+  .groups = "drop"
+)
+
+  # Rank all states from highest to lowest turnover within each year
+ranked_state_turnover <- annual_state_turnover %>%
+group_by(year) %>%
+arrange(
+  desc(annual_turnover),
+  .by_group = TRUE
+) %>%
+mutate(
+  annual_rank = row_number()
+) %>%
+ungroup()
+
+  #Find the highest-turnover state in each year
+annual_first_states <- ranked_state_turnover %>%
+filter(annual_rank == 1) %>%
+select(year,
+       first_state = state,
+       first_state_turnover = annual_turnover)
+
+#Find the second-highest state in each year
+annual_second_states <- ranked_state_turnover %>%
+filter(annual_rank == 2) %>%
+select(
+  year,
+  second_state = state,
+  second_state_turnover = annual_turnover
+)
+
+  #Combine the first and second-ranked states and calculate the difference between them
+annual_state_gap <- annual_first_states %>%
+left_join(annual_second_states,by = "year") %>%
+mutate( dollar_gap = first_state_turnover - second_state_turnover,
+        percentage_gap = dollar_gap / second_state_turnover * 100)
+
+  #year with the largest relative gap
+annual_state_gap %>%
+slice_max(percentage_gap,n = 1)
+
+  #year with the smallest relative gap
+annual_state_gap %>%
+slice_min(percentage_gap, n = 1)
+
+# Which industries show the strongest seasonal variation?
+
+# Calculate monthly turnover relative to each industry's average month within the same year
+monthly_seasonality <- turnover %>%
+filter(
+  year >= 2015,
+  year <= 2024,
+  state == "Total (State)",
+  industry_group != "Total (Industry)"
+) %>%
+group_by(industry_group, year) %>%
+mutate(
+  yearly_average = mean(value, na.rm = TRUE),
+  monthly_index = value / yearly_average * 100
+) %>%
+ungroup() %>%
+group_by(industry_group, month) %>%
+summarise(
+  average_monthly_index = mean(monthly_index,na.rm = TRUE),
+  .groups = "drop"
+) %>%
+  
+    # Convert month numbers into abbreviated month names
+mutate(month_name = month.abb[month])
+
+  # Identify each industry's lowest and highest months and calculate its seasonal range
+seasonal_summary <- monthly_seasonality %>%
+group_by(industry_group) %>%
+summarise(
+  lowest_month = month_name[which.min(average_monthly_index)],
+  lowest_index = min(average_monthly_index),
+  highest_month = month_name[which.max(average_monthly_index)],
+  highest_index = max(average_monthly_index),
+  seasonal_range =highest_index - lowest_index,
+  .groups = "drop"
+) %>%
+arrange(desc(seasonal_range))
+
+industry_order <- seasonal_summary %>%
+  arrange(seasonal_range) %>%
+  pull(industry_group)
+
+#ensure the same industry order to the monthly observations
+monthly_seasonality <- monthly_seasonality %>%
+  mutate(
+    industry_group = factor(
+      industry_group,
+      levels = industry_order
+    )
+  )
+
+  #ensure the same order to the seasonal summary
+seasonal_summary <- seasonal_summary %>%
+  mutate(
+    industry_group = factor(
+      industry_group,
+      levels = industry_order
+    )
+  )
+ # check industries ranked by seasonal variation
+seasonal_summary
+
+```
+b)  
+```{r, fig.width=13, fig.height=12, echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+
+
+  #covid plotting
+ggplot(
+  covid_annual,
+  aes(
+    x = year,
+    y = turnover_index,
+    group = industry_group)
+) +
+geom_rect(
+  data = covid_periods,
+  aes(
+    xmin = xmin,
+    xmax = xmax,
+    ymin = -Inf,
+    ymax = Inf,
+    fill = period),
+  inherit.aes = FALSE,
+  alpha = 0.25
+) +
+geom_hline(
+  yintercept = 100,
+  linetype = "dashed",
+  colour = "grey40",
+  linewidth = 0.6
+) +
+geom_line(colour = "#08306B",linewidth = 0.9
+) +
+geom_point(
+  shape = 21,
+  fill = "white",
+  colour = "#08306B",
+  size = 2.3,
+  stroke = 0.8
+) +
+geom_text(
+  data = covid_annual %>%
+  filter(year == 2024),
+  aes(label = round(turnover_index)),
+  nudge_x = 0.15,
+  hjust = 0,
+  size = 3
+) +
+facet_wrap(
+  ~industry_group,
+  ncol = 3,
+  labeller = label_wrap_gen(width = 22)
+) +
+scale_x_continuous(breaks = 2017:2024,limits = c(2016.5, 2024.6)
+) +
+scale_y_continuous(breaks = seq(70, 150, by = 10)
+) +
+scale_fill_manual(
+  values = c("Before COVID-19" = "#D9D9D9","During COVID-19" = "#F4B6B6","After COVID-19" = "#CFE8D5")
+) +
+coord_cartesian(ylim = c(70, 150), clip = "off"
+) +
+labs(
+  title = "1. Change in Australian Annual Retail Turnover by Industry Group Before, During and After COVID-19",
+  x = "Year",
+  y = "Turnover index (2019 = 100)",
+  fill = "Period"
+) +
+theme_bw(base_size = 11) +
+theme(plot.title = element_text(face = "bold",size = 16,hjust=0.5),
+strip.text = element_text(face = "bold",size = 10),
+axis.text.x = element_text(angle = 45,hjust = 1),
+legend.position = "bottom",
+legend.title = element_text(face = "bold"),
+panel.spacing = unit(1, "lines"),
+plot.margin = margin(5.5, 20, 5.5, 5.5)
+)
+
+
+```
+- What happened to the industry group before, during and after Covid pandemic?
+
+The indexed line charts show that Australian industries followed different trends before, during and after the COVID-19 pandemic. Indexing each industry to its 2019 turnover (2019 = 100) makes relative change directly comparable across industries. For example, an index of 132 means turnover was 32% above that industry's own 2019 level.
+
+Regarding the charts, it is noticeable that before COVID-19, most industries were broadly flat to mildly increasing as they approached the 2019 baseline. Clothing, food retailing and supermarket and grocery rose from around 92 to 100. Department stores were essentially flat across the period around 98 to 100. The clear exception was newspaper and book retailing, which declined from around 119 in 2017 to 100 in 2019, highlighting its downward trend was already happened before the pandemic and cannot be attributed to COVID-19.
+
+During covid period, there are two separate groups of industries. Categories related to at-home consumption and essential spending rose immediately and continued climbing through 2021. Food retailing grew from 100 to roughly 113, supermarkets and grocery stores to around 110, household goods rose to approximately 121 and other retailing reached 120 in 2021, likely because people spent more on their homes while staying indoors during lock downs. Liquor retailing rose the most of any industry, reaching about 131 in 2020 and about 136 in 2021.
+
+The second group stayed flat or even fell. Clothing dropped to about 93 in 2020 and only partly recovered to about 107 in 2021, still below its 2019 level for almost the whole period. Newspaper and book retailing kept falling, reaching about 88 in 2020 and about 86 in 2021. Department stores and takeaway food services showed no growth, staying close to 100 throughout the period.
+
+After COVID-19 (2022 onward), growth speeds up across almost every industry. Clothing shows the strongest recovery, moving from about 107 at the end of the COVID period to 133 in 2022, 137 in 2023 and 140 in 2024. This is the clearest case of an industry that fell during COVID and then recovered strongly afterward. Department stores and takeaway food services also start growing again after staying almost flat during COVID. Other retailing follows a similar path and also reaches 144. Noticeably, while Liquor retailing keeps growing but at a much slower pace than during 2020–2021, Supermarkets and grocery stores observered a faster growing speed, reaching 126 by 2024. Food retailing continues steady, more moderate growth into the high 120s.
+
+Household goods retailing and newspaper and book retailing are the two exceptions to this recovery pattern. Household goods peaked at about 131 in 2022, then pulled back to 125 in 2023 before growing up slightly to 127 in 2024, its only pullback in the entire dataset after an initial post-COVID recovery. Newspaper and book retailing keeps declining through the entire post-COVID period, reaching 75 by 2024. It is the only industry that finishes below its 2019 baseline and by a large margin.
+
+```{r, fig.width=11, fig.height=9, out.width="100%", echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+ ggplot(
+  state_industry_2024,
+  aes(
+    x = state_short,
+    y = industry_group,
+    fill = turnover_share)
+) +
+geom_tile(
+  colour = "white",
+  linewidth = 0.7
+) +
+geom_tile(
+  data = state_industry_2024 %>%
+  filter(industry_rank == 1),
+  fill = NA,
+  colour = "#D95F02",
+  linewidth = 1.3
+) +
+geom_text(
+  aes(label = percentage_label,
+      colour = label_colour,
+      fontface = label_style),
+  size = 3.5
+) +
+scale_fill_gradient(
+  low = "#F7FBFF",
+  high = "#08306B",
+  labels = scales::label_number(accuracy = 1,suffix = "%")
+) +
+scale_colour_identity() +
+scale_y_discrete(labels = function(x) {stringr::str_wrap(x, width = 27)}
+) +
+labs(title = "2. State and Territory Shares of Turnover by Industry", 
+    x = "State or Territory",
+    y = "Industry Group",
+    fill = "Share of industry\nturnover",
+    caption = paste("Each row sums to 100% across the eight states and territories.")
+) +
+theme_bw() +
+theme(
+  text = element_text(size = 12),
+  plot.title = element_text(face = "bold", size = 16, hjust=0.5),
+  axis.text.x = element_text(face = "bold"),
+  panel.grid = element_blank(),
+  legend.title = element_text(face = "bold")
+)
+
+
+```
+- Does New South Wales highest turnover over time also mean it leads every industry?
+
+New South Wales held the largest share in liquor retailing, at 41%, followed by clothing retailing at 39.3%, both considerably higher than Victoria's corresponding shares of 33.1% and 28.4%. NSW's first place seemed to be narrower in the remaining industries, ranging from 28.2% in takeaway food services to 31.6% in department stores, with Victoria consistently placed second in each case, at between 23.1% and 27.8%.
+
+The sole exception was newspaper and book retailing, in which Queensland recorded the highest share at 29.7%, ahead of Victoria at 24.7% and New South Wales at 23.1%, the only instance in the chart where NSW was not the leading contributor.
+
+Western Australia consistently ranked fourth across all nine industries, with shares generally between 6.8% and 16.4%, while South Australia followed in fifth place, contributing between 3.7% and 7.4%. Tasmania, the ACT, and the Northern Territory contributed the smallest shares throughout, mostly remaining below 4%, and in three instances, liquor retailing in Queensland, department stores in Tasmania, and liquor retailing in the Northern Territory, turnover share fell to 0%. 
+
+```{r, fig.width=12, fig.height=9, out.width="100%", echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+    
+ggplot(
+  annual_state_gap,
+  aes(
+    x = year,
+    y = percentage_gap
+  )
+) +
+geom_area(
+  fill = "#A9CFE8",
+  alpha = 0.45
+) +
+geom_line(colour = "#08306B",linewidth = 1
+) +
+geom_point(colour = "#08306B",size = 1.8
+) +
+geom_point(
+  data = annual_state_gap %>%
+  filter(year %in% c(1989, 1996, 2024)),
+  colour = "#D95F02",
+  size = 3
+) +
+geom_text(
+  data = annual_state_gap %>%
+  filter(year %in% c(1989, 1996, 2024)),
+  aes(
+    label = paste0(round(percentage_gap, 1),"%")
+  ),
+  nudge_y = 3,
+  fontface = "bold",
+  size = 3.5
+) +
+scale_x_continuous(breaks = seq(1990, 2025, by = 5)
+) +
+scale_y_continuous(
+  limits = c(0, 60),
+  breaks = seq(0, 60, by = 10),
+  labels = scales::label_number(suffix = "%"),
+  expand = c(0, 0)
+) +
+labs(title = "3. Gap Between the First and Second-Ranked States (NSW vs VIC)",
+     x = "Year",
+     y = "NSW turnover over Victoria",
+) +
+theme_bw() +
+theme(
+  text = element_text(size = 12),
+  plot.title = element_text(face = "bold", size = 16, hjust=0.5),
+  panel.grid.minor = element_blank()
+)
+
+```
+    
+- Is Victoria Catching Up with New South Wales in Retail Turnover?
+
+At the start of the period, in 1989, NSW's turnover exceeded Victoria's by 38.6%. This gap rose steadily over the following seven years, with only a brief dip around 1993, to reach a peak of 53% in 1996, the highest figure recorded across the entire timeframe. From this point, the gap declined sharply and almost continuously until 1999, falling to just under 32%, although there was a temporary rise to around 35% in 2000 before the downward trend resumed.
+
+From the early 2000s onwards, the gap continued to narrow, though at a much slower and more irregular pace, moving broadly within a range of 21% to 28% for the next two decades. Two brief upward spikes interrupted this general decline, one around 2015 to 2016 and a more pronounced one in 2020, when the gap climbed back up to approximately 28%. Aside from these fluctuations, however, the overall trajectory from 2000 to 2024 remained downward, with the gap eventually falling to 20.4% by 2024, its lowest point in the entire 35-year period.
+
+```{r, fig.width=11, fig.height=9, out.width="100%", echo = TRUE, eval = TRUE, message=FALSE, warning=FALSE}
+
+ggplot() +
+geom_vline(
+  xintercept = 100,
+  linetype = "dashed",
+  colour = "grey50",
+  linewidth = 0.6
+) +
+geom_segment(
+  data = seasonal_summary,
+  aes(
+    x = lowest_index,
+    xend = highest_index,
+    y = industry_group,
+    yend = industry_group
+  ),
+  colour = "grey70",
+  linewidth = 2
+) +
+geom_point(
+  data = monthly_seasonality,
+  aes(
+    x = average_monthly_index,
+    y = industry_group
+  ),
+  position = position_jitter(height = 0.08,width = 0, seed = 1
+  ),
+  colour = "grey35",
+  size = 1.8,
+  alpha = 0.55
+) +
+geom_point(
+  data = seasonal_summary,
+  aes(
+    x = lowest_index,
+    y = industry_group,
+    colour = "Lowest month"
+  ),
+  size = 3.5
+) +
+geom_point(
+  data = seasonal_summary,
+  aes(
+    x = highest_index,
+    y = industry_group,
+    colour = "Highest month"
+  ),
+  size = 3.5
+) +
+geom_text(
+  data = seasonal_summary,
+  aes(
+    x = lowest_index,
+    y = industry_group,
+    label = paste0(
+    lowest_month,
+    " ",
+    round(lowest_index, 1))
+  ),
+  hjust = 1.15,
+  colour = "#08306B",
+  size = 3.2
+) +
+geom_text(
+  data = seasonal_summary,
+  aes(
+    x = highest_index,
+    y = industry_group,
+    label = paste0(highest_month, " ",round(highest_index, 1))
+  ),
+  hjust = -0.15,
+  colour = "#D95F02",
+  size = 3.2
+) +
+scale_colour_manual(
+  values = c("Lowest month" = "#08306B", "Highest month" = "#D95F02"),
+  name = NULL
+) +
+scale_x_continuous(breaks = seq(60, 180, by = 20), limits = c(60, 190)
+) +
+scale_y_discrete(
+  labels = function(x) {stringr::str_wrap(x, width = 28)}
+) +
+labs(
+  title = "4. Seasonal Variation in Retail Turnover by Industry",
+  subtitle = paste("For each industry and year, the average monthly turnover index = 100"),
+  x = "Average monthly turnover index",
+  y = "Industry Group",
+) +
+theme_bw() +
+theme(
+  text = element_text(size = 12),
+  plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+  plot.subtitle = element_text(hjust = 0.5),
+  legend.position = "top",
+  panel.grid.minor = element_blank()
+)
+
+
+```
+- Which Industries Show the Strongest Seasonal Variation?
+
+Department stores exhibited the widest seasonal gap of all nine industries. Turnover peaked in December at an index of 178.2, roughly 78 points above the annual average, before falling to a low of just 72.0 in February, a difference of 106.2 percentage points. Clothing and liquor retailing followed a similar pattern on a smaller scale, with December peaks of 157.8 and 156.5 respectively, and February lower to 76.9 and 84.6, giving ranges of 80.9 and 71.9 percentage points.
+
+By contrast, supermarket and grocery stores showed the smallest fluctuation, with turnover ranging from 91.7 in February to only 114.1 in December, a gap of just 22.4 percentage points. Takeaway food services and food retailing were similarly steady, with ranges of 25.6 and 28.3 percentage points respectively.
+
+The remaining industries, household goods, other retailing, and newspaper and book retailing, fell between these two extremes, with ranges of roughly 42 to 49 percentage points. Newspaper and book retailing was the only industry not to record its lowest turnover in February, instead reaching its low point in June at an index of 90.8.
+
+
