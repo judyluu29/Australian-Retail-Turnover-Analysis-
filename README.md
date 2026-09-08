@@ -57,7 +57,8 @@ The analysis was structured around six questions:
 
 # Dataset
 
-The dataset contains monthly Australian retail turnover observations across states and industry groups.
+The dataset was obtained from a published source:https://www.abs.gov.au/articles/retail-trade-journey-through-75-years-retail-statistics
+It contains monthly Australian retail turnover observations across states and industry groups.
 
 | Dataset Feature | Description |
 |---|---|
