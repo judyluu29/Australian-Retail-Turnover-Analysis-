@@ -49,7 +49,7 @@ The dataset contains monthly Australian retail turnover observations across stat
 
 ### Main Variables
 
-- `date` — monthly observation date
+- `date` - monthly observation date
 - `value` — retail turnover in AUD millions
 - `state` — Australian state or territory
 - `industry_group` — retail industry
