@@ -508,7 +508,7 @@ The pandemic-related increase therefore did not continue at the same pace.
 
 ---
 
-# 4. State Leadership Depends on the Industry
+# State Leadership Depends on the Industry
 
 ![State and Territory Shares of Turnover by Industry](images/state_industry_share.png)
 
@@ -583,7 +583,7 @@ This distinction is important because aggregate leadership can hide varying degr
 
 ---
 
-# 5. Victoria Is Closing the Historical Gap With NSW
+# Victoria Is Closing the Historical Gap With NSW
 
 ![Gap Between NSW and Victoria](images/nsw_vic_gap.png)
 
@@ -655,7 +655,7 @@ This was the **smallest relative gap observed across the 35-year comparison**.
 
 ---
 
-# 6. Seasonal Variation Differs Substantially by Industry
+# Seasonal Variation Differs Substantially by Industry
 
 ![Seasonal Variation in Retail Turnover by Industry](images/seasonal_variation.png)
 
